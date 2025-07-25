@@ -31,9 +31,15 @@ from rvc.lib.algorithm.commons import grad_norm, slice_segments
 from rvc.lib.algorithm.discriminators import MultiPeriodDiscriminator
 from rvc.lib.algorithm.synthesizers import Synthesizer
 from rvc.train.losses import discriminator_loss, feature_loss, generator_loss, kl_loss
-from rvc.train.mel_processing import MultiScaleMelSpectrogramLoss, mel_spectrogram_torch, spec_to_mel_torch, plot_spectrogram_to_numpy, mel_spectrogram_similarity
+from rvc.train.mel_processing import (
+    MultiScaleMelSpectrogramLoss,
+    mel_spectrogram_similarity,
+    mel_spectrogram_torch,
+    plot_spectrogram_to_numpy,
+    spec_to_mel_torch,
+)
 from rvc.train.utils.data_utils import DistributedBucketSampler, TextAudioCollateMultiNSFsid, TextAudioLoaderMultiNSFsid
-from rvc.train.utils.train_utils import HParams, attempt_load_checkpoint_pair, save_checkpoint, extract_model
+from rvc.train.utils.train_utils import HParams, attempt_load_checkpoint_pair, extract_model, save_checkpoint
 
 torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = True
@@ -44,6 +50,7 @@ global_step = 0
 def generate_config(config_save_path, sample_rate, vocoder):
     config_path = os.path.join("rvc", "train", "configs", f"{sample_rate}.json")
     import pathlib
+
     if not pathlib.Path(config_save_path).exists():
         with open(config_save_path, "w", encoding="utf-8") as f:
             with open(config_path, "r", encoding="utf-8") as config_file:
@@ -112,11 +119,7 @@ def main():
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = str(randint(20000, 55555))
 
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else 
-        "mps" if torch.backends.mps.is_available() else 
-        "cpu"
-    )
+    device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     gpus = [int(item) for item in hps.gpus.split("-")] if device.type == "cuda" else [0]
     n_gpus = len(gpus)
     if device.type == "cpu":
@@ -211,10 +214,7 @@ def run(hps, rank, n_gpus, device, device_id, global_step):
             net_d = DDP(net_d, device_ids=[device_id])
 
         # Загрузка чекпоинтов
-        checkpoint_paths = [
-            ("G_checkpoint.pth", "D_checkpoint.pth"),
-            ("G_checkpoint_backup.pth", "D_checkpoint_backup.pth")
-        ]
+        checkpoint_paths = [("G_checkpoint.pth", "D_checkpoint.pth"), ("G_checkpoint_backup.pth", "D_checkpoint_backup.pth")]
 
         loaded = False
         for g_file, d_file in checkpoint_paths:
@@ -284,7 +284,7 @@ def train_and_evaluate(hps, rank, epoch, global_step, nets, optims, train_loader
 
     epoch_recorder = EpochRecorder()
     for _, info in enumerate(train_loader):
-        info = [tensor.to(device, non_blocking=device.type=="cuda") for tensor in info]
+        info = [tensor.to(device, non_blocking=device.type == "cuda") for tensor in info]
         phone, phone_lengths, pitch, pitchf, spec, spec_lengths, wave, _, sid = info
 
         model_output = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid)

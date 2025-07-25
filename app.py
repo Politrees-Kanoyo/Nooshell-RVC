@@ -1,5 +1,6 @@
 # Установка необходимых файлов, если их нет
 from assets.model_installer import check_and_install_models
+
 check_and_install_models()
 
 print("\nЗапуск интерфейса Mushroom RVC. Подождите...\n")
