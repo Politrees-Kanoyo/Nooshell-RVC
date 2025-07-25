@@ -1,6 +1,7 @@
 import gradio as gr
 
 from rvc.infer.infer import rvc_edgetts_infer, rvc_infer
+
 from .components.modules import (
     OUTPUT_FORMAT,
     edge_voices,

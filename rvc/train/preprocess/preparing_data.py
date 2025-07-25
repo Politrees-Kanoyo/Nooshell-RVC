@@ -8,14 +8,14 @@ from random import shuffle
 import numpy as np
 import soundfile as sf
 import torch
-from tqdm import tqdm
 from fairseq.checkpoint_utils import load_model_ensemble_and_task
 from fairseq.data.dictionary import Dictionary
+from tqdm import tqdm
 
 sys.path.append(os.getcwd())
 
 from rvc.lib.audio import load_audio
-from rvc.lib.predictors.f0 import RMVPE, FCPE, CREPE
+from rvc.lib.predictors.f0 import CREPE, FCPE, RMVPE
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -102,7 +102,9 @@ class DataPreprocessor:
         padding_mask = torch.BoolTensor(feats.shape).fill_(False)
 
         with torch.no_grad():
-            logits = self.hubert_model.extract_features(source=feats.to(self.device), padding_mask=padding_mask.to(self.device), output_layer=12)
+            logits = self.hubert_model.extract_features(
+                source=feats.to(self.device), padding_mask=padding_mask.to(self.device), output_layer=12
+            )
             return logits[0].squeeze(0).float().cpu().numpy()
 
     def process_files(self):
